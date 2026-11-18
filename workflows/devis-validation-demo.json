@@ -1,0 +1,98 @@
+{
+  "name": "Devis à valider — démonstration sur six demandes fictives",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "51b24e6f-0f86-43ea-8a06-2c940999d19b",
+      "name": "Lancer la démo",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const exemples = [\n  {\n    \"nom\": \"Demande complète\",\n    \"payload\": {\n      \"id_demande\": \"DEMO-001\",\n      \"email\": \"contact@atelier.example\",\n      \"service\": \"Maintenance de site\",\n      \"quantite\": 1\n    },\n    \"attendu\": {\n      \"statut\": \"a_valider\",\n      \"nouveaux_brouillons\": 1\n    }\n  },\n  {\n    \"nom\": \"Rejeu du webhook\",\n    \"payload\": {\n      \"id_demande\": \"DEMO-001\",\n      \"email\": \"contact@atelier.example\",\n      \"service\": \"Maintenance de site\",\n      \"quantite\": 1\n    },\n    \"attendu\": {\n      \"statut\": \"doublon\",\n      \"nouveaux_brouillons\": 0\n    }\n  },\n  {\n    \"nom\": \"Service manquant\",\n    \"payload\": {\n      \"id_demande\": \"DEMO-002\",\n      \"email\": \"achats@exemple.example\",\n      \"quantite\": 2\n    },\n    \"attendu\": {\n      \"statut\": \"a_completer\",\n      \"champ_a_corriger\": \"service\",\n      \"nouveaux_brouillons\": 0\n    }\n  },\n  {\n    \"nom\": \"Espaces, casse et quantité en texte\",\n    \"payload\": {\n      \"id_demande\": \"DEMO-003\",\n      \"email\": \"  INFO@AGENCE.EXAMPLE  \",\n      \"service\": \"Mise en page\",\n      \"quantite\": \"3\"\n    },\n    \"attendu\": {\n      \"statut\": \"a_valider\",\n      \"email_normalise\": \"info@agence.example\",\n      \"quantite_normalisee\": 3,\n      \"nouveaux_brouillons\": 1\n    }\n  },\n  {\n    \"nom\": \"Adresse invalide\",\n    \"payload\": {\n      \"id_demande\": \"DEMO-004\",\n      \"email\": \"info-sans-arobase.example\",\n      \"service\": \"Intégration CRM\",\n      \"quantite\": 1\n    },\n    \"attendu\": {\n      \"statut\": \"a_completer\",\n      \"champ_a_corriger\": \"email\",\n      \"nouveaux_brouillons\": 0\n    }\n  },\n  {\n    \"nom\": \"Quantité non positive\",\n    \"payload\": {\n      \"id_demande\": \"DEMO-005\",\n      \"email\": \"hello@studio.example\",\n      \"service\": \"Reporting\",\n      \"quantite\": 0\n    },\n    \"attendu\": {\n      \"statut\": \"a_completer\",\n      \"champ_a_corriger\": \"quantite\",\n      \"nouveaux_brouillons\": 0\n    }\n  }\n];\nreturn exemples.map((exemple) => ({ json: exemple }));"
+      },
+      "id": "0de9fc87-9083-44f8-a836-504692a8ad7d",
+      "name": "Charger les demandes fictives",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        260,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const brouillons = new Map();\n\nfunction texte(valeur) {\n  return typeof valeur === 'string' ? valeur.trim() : '';\n}\n\nfunction entierPositif(valeur) {\n  const nombre = typeof valeur === 'string' && /^\\d+$/.test(valeur.trim())\n    ? Number(valeur.trim()) : valeur;\n  return Number.isSafeInteger(nombre) && nombre > 0 ? nombre : null;\n}\n\nfunction traiter(demande) {\n  const id_demande = texte(demande.id_demande);\n  const email = texte(demande.email).toLowerCase();\n  const service = texte(demande.service);\n  const quantite = entierPositif(demande.quantite);\n\n  if (brouillons.has(id_demande)) {\n    return { id_demande, statut: 'doublon', nouveaux_brouillons: 0 };\n  }\n\n  const champs_a_corriger = [];\n  if (!id_demande) champs_a_corriger.push('id_demande');\n  if (!/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(email)) champs_a_corriger.push('email');\n  if (!service) champs_a_corriger.push('service');\n  if (quantite === null) champs_a_corriger.push('quantite');\n\n  if (champs_a_corriger.length) {\n    return { id_demande, statut: 'a_completer', champs_a_corriger, nouveaux_brouillons: 0 };\n  }\n\n  const brouillon = { reference: id_demande, email, service, quantite, validation: 'en_attente' };\n  brouillons.set(id_demande, brouillon);\n  return {\n    id_demande,\n    statut: 'a_valider',\n    email_normalise: email,\n    quantite_normalisee: quantite,\n    nouveaux_brouillons: 1,\n    brouillon,\n  };\n}\n\nreturn $input.all().map(({ json: exemple }) => ({\n  json: { cas: exemple.nom, attendu: exemple.attendu, ...traiter(exemple.payload) },\n}));"
+      },
+      "id": "681b9d9c-aa21-4c74-8a84-d1be29578680",
+      "name": "Trier et préparer les brouillons",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        560,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const resultats = $input.all().map(({ json }) => {\n  const { attendu, ...obtenu } = json;\n  const conforme = Object.entries(attendu).every(([champ, valeur]) => {\n    if (champ === 'champ_a_corriger') return obtenu.champs_a_corriger?.includes(valeur);\n    return obtenu[champ] === valeur;\n  });\n  if (!conforme) throw new Error('Résultat inattendu : ' + obtenu.cas);\n  return { ...obtenu, conforme };\n});\n\nreturn [{ json: {\n  cas_reussis: resultats.length,\n  brouillons_a_valider: resultats.flatMap((cas) => cas.brouillon ? [cas.brouillon] : []),\n  demandes_a_completer: resultats.filter((cas) => cas.statut === 'a_completer').length,\n  doublons_ecartes: resultats.filter((cas) => cas.statut === 'doublon').length,\n  resultats,\n} }];"
+      },
+      "id": "55966566-5e24-4e0e-bd66-72c87da3a817",
+      "name": "Vérifier les résultats",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        860,
+        0
+      ]
+    }
+  ],
+  "connections": {
+    "Lancer la démo": {
+      "main": [
+        [
+          {
+            "node": "Charger les demandes fictives",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Charger les demandes fictives": {
+      "main": [
+        [
+          {
+            "node": "Trier et préparer les brouillons",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Trier et préparer les brouillons": {
+      "main": [
+        [
+          {
+            "node": "Vérifier les résultats",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "pinData": {}
+}

@@ -1,0 +1,341 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Tri des demandes de devis · Démonstration</title>
+  <style>
+    :root { color-scheme: light; --ink: #152c42; --muted: #41586a; --paper: #e9edf0; --white: #fcfdff; --line: #bfcbd4; --blue: #cce4f2; --amber: #ffebc7; font: 1rem/1.4 "Instrument Sans", "Avenir Next", sans-serif; background: var(--paper); color: var(--ink); }
+    * { box-sizing: border-box; }
+    body { margin: 0; }
+    main { width: min(72rem, 100% - 2rem); margin: clamp(1rem, 3vw, 2.4rem) auto; }
+    h1, h2, p, dl, dd { margin: 0; }
+    h1, h2 { line-height: 1.13; }
+    h1 { font-family: "Barlow Condensed", "Avenir Next Condensed", sans-serif; font-size: clamp(2.6rem, 6vw, 4.15rem); letter-spacing: -.04em; }
+    h2 { font-size: 1.33rem; }
+    header { background: var(--ink); color: var(--white); padding: clamp(1.2rem, 3vw, 2rem); border-radius: .9rem .9rem 0 0; border-bottom: .32rem solid #9eceeb; }
+    header p { margin-top: .6rem; color: #dce9f3; }
+    .layout { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.14fr); gap: 1rem; align-items: stretch; margin-top: .9rem; }
+    section { min-width: 0; padding: clamp(.85rem, 2vw, 1.25rem); background: var(--white); border: 1px solid var(--line); border-radius: .7rem; }
+    .source { display: flex; flex-direction: column; gap: .6rem; }
+    label { display: block; font-weight: 680; font-size: .9rem; }
+    textarea, select, button { font: inherit; }
+    textarea, select { width: 100%; min-width: 0; border: 1px solid #94a9b9; border-radius: .35rem; padding: .45rem .6rem; color: var(--ink); background: #fff; }
+    select { min-height: 2.5rem; }
+    textarea { resize: vertical; line-height: 1.5; }
+    #email { flex: 1; min-height: 15rem; background: #f5f8fa; }
+    #draft { margin-top: .25rem; min-height: 7.7rem; }
+    button { min-height: 2.6rem; border: 1px solid #497894; padding: .38rem .65rem; border-radius: .35rem; font-weight: 730; color: var(--ink); background: var(--blue); cursor: pointer; }
+    button:hover { background: #abd7ed; }
+    button:disabled { opacity: .55; cursor: default; }
+    :focus-visible { outline: .17rem solid #215875; outline-offset: .12rem; }
+    .result { margin: .65rem 0; padding: .6rem .75rem; border-left: .23rem solid #39718c; background: #dfeff7; font-weight: 700; }
+    .result[data-state="incomplete"], .result[data-state="duplicate"] { border-color: #a96925; background: var(--amber); color: #583b20; }
+    dl { display: grid; grid-template-columns: 1fr 1fr; gap: .35rem .8rem; margin: .55rem 0 .7rem; }
+    dl div { min-width: 0; padding-bottom: .27rem; border-bottom: 1px solid #dce4e9; }
+    dl .wide { grid-column: 1 / -1; }
+    dt { color: var(--muted); font-size: .78rem; }
+    dd { overflow-wrap: anywhere; font-size: .93rem; font-weight: 680; }
+    .buttons { display: flex; align-items: center; flex-wrap: wrap; gap: .6rem; }
+    .status, .note { color: var(--muted); font-size: .83rem; }
+    .note { margin-top: .7rem; }
+    [hidden] { display: none !important; }
+    input { width: 100%; min-height: 2.5rem; border: 1px solid #94a9b9; border-radius: .35rem; padding: .45rem .6rem; color: var(--ink); font: inherit; }
+    #quote { margin-top: 1rem; padding: clamp(1rem, 3vw, 1.6rem); border-top: .3rem solid #39718c; }
+    #quote h2 { margin-bottom: .4rem; }
+    .quote-layout { display: grid; grid-template-columns: minmax(0, 4fr) minmax(0, 5fr); gap: clamp(1rem, 4vw, 2.5rem); margin-top: 1rem; align-items: start; }
+    .quote-controls { display: grid; gap: .7rem; }
+    .quote-controls label { margin-bottom: .25rem; }
+    #quote-quantity { max-width: 7rem; }
+    .quote-controls .status { min-height: 1.3em; }
+    .paper-quote { background: #f6fafc; border: 1px solid var(--line); padding: clamp(.85rem, 3vw, 1.35rem); }
+    .paper-quote h3 { margin: 0; font-family: "Barlow Condensed", "Avenir Next Condensed", sans-serif; font-size: 1.65rem; line-height: 1.1; }
+    .paper-quote p { overflow-wrap: anywhere; }
+    .paper-quote > p + p { margin-top: .3rem; }
+    .paper-quote .details { margin-top: .7rem; }
+    .quote-totals { display: grid; grid-template-columns: 1fr; gap: 0; margin: .9rem 0 0; font-variant-numeric: tabular-nums; }
+    .quote-totals div { display: flex; justify-content: space-between; gap: .8rem; padding: .4rem 0; }
+    .quote-totals dt, .quote-totals dd { font-size: .94rem; }
+    .quote-totals .total { border-bottom: 0; padding-bottom: 0; }
+    .quote-totals .total dt, .quote-totals .total dd { font-size: 1.12rem; font-weight: 730; color: var(--ink); }
+    .print-only { display: none; }
+    @media (max-width: 47rem) { .layout { grid-template-columns: 1fr; } }
+    @media (max-width: 40rem) { .quote-layout { grid-template-columns: 1fr; } }
+    @media print {
+      @page { margin: 20mm; }
+      html, body { background: white; color: #152c42; }
+      main { width: 100%; margin: 0; }
+      header, .layout, main > .note, #quote > h2, #quote > p, .quote-controls { display: none; }
+      #quote, .paper-quote { margin: 0; padding: 0; border: 0; background: white; }
+      .quote-layout { display: block; margin: 0; }
+      .print-only { display: block; margin-top: 1.5rem; font-size: .9rem; }
+      body:not([data-quote-approved]) .paper-quote { display: none; }
+    }
+  </style>
+</head>
+<body>
+<main>
+  <header>
+    <h1>Tri des demandes de devis</h1>
+    <p>Colle un e-mail d’exemple, repère les informations manquantes et prépare une réponse à relire.</p>
+  </header>
+  <div class="layout">
+    <section class="source" aria-labelledby="source-title">
+      <h2 id="source-title">E-mail reçu</h2>
+      <div>
+        <label for="example">Exemple fictif</label>
+        <select id="example">
+          <option value="0">Informations manquantes</option>
+          <option value="1">Demande complète</option>
+          <option value="2">Référence déjà reçue</option>
+        </select>
+      </div>
+      <label for="email">Message à analyser</label>
+      <textarea id="email" spellcheck="false"></textarea>
+      <div class="buttons"><button id="analyse" type="button">Analyser le message</button><p class="status" id="source-status" role="status"></p></div>
+    </section>
+    <section aria-labelledby="result-title">
+      <h2 id="result-title">Fiche et réponse</h2>
+      <p class="result" id="status" aria-live="polite"></p>
+      <dl>
+        <div><dt>Référence</dt><dd id="ref"></dd></div>
+        <div><dt>Expéditeur</dt><dd id="from"></dd></div>
+        <div class="wide"><dt>Objet</dt><dd id="subject"></dd></div>
+        <div class="wide"><dt>Intervention</dt><dd id="need"></dd></div>
+        <div><dt>Lieu</dt><dd id="location"></dd></div>
+        <div><dt>Délai</dt><dd id="timing"></dd></div>
+      </dl>
+      <label for="draft">Brouillon modifiable</label>
+      <textarea id="draft" rows="4"></textarea>
+      <div class="buttons"><button id="download" type="button">Télécharger la fiche JSON</button><p class="status" id="download-status" role="status"></p></div>
+    </section>
+  </div>
+  <section id="quote" aria-labelledby="quote-title">
+    <h2 id="quote-title">Devis chiffré à valider</h2>
+    <p id="quote-help" class="status" role="status"></p>
+    <div id="quote-panel" class="quote-layout" hidden>
+      <form id="quote-form" class="quote-controls">
+        <div>
+          <label for="quote-service">Prestation et prix unitaire HT</label>
+          <select id="quote-service" required>
+            <option value="" disabled>Choisir une prestation</option>
+            <option value="door">Pose d’une porte de service · 320 €</option>
+            <option value="light">Remplacement d’un luminaire · 85 €</option>
+            <option value="inspection">Contrôle d’une prise · 55 €</option>
+          </select>
+        </div>
+        <div>
+          <label for="quote-quantity">Quantité</label>
+          <input id="quote-quantity" type="number" min="1" max="99" step="1" value="1" required>
+        </div>
+        <div class="buttons">
+          <button id="quote-approve" type="submit">Valider le devis</button>
+          <button id="quote-print" type="button" hidden>Enregistrer en PDF</button>
+        </div>
+        <p id="quote-status" class="status" role="status"></p>
+      </form>
+      <article class="paper-quote" aria-labelledby="paper-title">
+        <h3 id="paper-title">Devis de démonstration</h3>
+        <p id="quote-reference" class="status"></p>
+        <div class="details">
+          <p id="quote-where"></p>
+          <p id="quote-line"></p>
+        </div>
+        <dl class="quote-totals">
+          <div><dt>Total HT</dt><dd id="quote-net"></dd></div>
+          <div><dt>TVA fictive (20 %)</dt><dd id="quote-tax"></dd></div>
+          <div class="total"><dt>Total TTC</dt><dd id="quote-total"></dd></div>
+        </dl>
+        <p class="print-only">Devis validé dans la démonstration. Données et tarifs fictifs.</p>
+      </article>
+    </div>
+  </section>
+  <p class="note">Démo hors ligne avec données et tarifs fictifs. Elle utilise les champs libellés du message et mémorise les références validées jusqu’au rechargement de la page.</p>
+</main>
+<script>
+  "use strict";
+  const samples = [
+    `De : Camille Moreau <camille@exemple.invalid>
+Objet : Devis pour l’éclairage d’un atelier
+Référence : DEMO-108
+
+Bonjour,
+Intervention : Remplacer trois luminaires dans notre atelier.
+Merci pour votre retour,
+Camille`,
+    `De : Alex Renard <alex@exemple.invalid>
+Objet : Devis pour une porte d’atelier
+Référence : DEMO-110
+
+Bonjour,
+Intervention : Remplacer la porte de service de l’atelier.
+Lieu : Atelier fictif, zone industrielle.
+Délai : Avant fin novembre.
+Merci,
+Alex`,
+    `De : Lina Caron <lina@exemple.invalid>
+Objet : Je renvoie ma demande de devis
+Référence : DEMO-104
+
+Bonjour,
+Intervention : Contrôler une prise dans l’atelier.
+Lieu : Site fictif, secteur centre.
+Délai : La semaine prochaine.
+Merci,
+Lina`
+  ];
+  const registry = new Map([["DEMO-104", "Déjà inscrite le 10 novembre 2026 dans le registre de démonstration."]]);
+  const catalogue = {
+    door: { label: "Pose d’une porte de service", cents: 32000 },
+    light: { label: "Remplacement d’un luminaire", cents: 8500 },
+    inspection: { label: "Contrôle d’une prise", cents: 5500 }
+  };
+  const aliases = { de: "from", expediteur: "from", objet: "subject", reference: "ref", intervention: "need", demande: "need", lieu: "location", adresse: "location", delai: "timing", echeance: "timing" };
+  const required = { from: "une adresse e-mail de réponse", need: "la description de l’intervention", location: "le lieu de l’intervention", timing: "le délai souhaité" };
+  const email = document.querySelector("#email");
+  const sample = document.querySelector("#example");
+  const draft = document.querySelector("#draft");
+  const status = document.querySelector("#status");
+  const sourceStatus = document.querySelector("#source-status");
+  const downloadStatus = document.querySelector("#download-status");
+  const downloadButton = document.querySelector("#download");
+  const quoteHelp = document.querySelector("#quote-help");
+  const quotePanel = document.querySelector("#quote-panel");
+  const quoteForm = document.querySelector("#quote-form");
+  const quoteService = document.querySelector("#quote-service");
+  const quoteQuantity = document.querySelector("#quote-quantity");
+  const quoteApprove = document.querySelector("#quote-approve");
+  const quotePrint = document.querySelector("#quote-print");
+  const quoteStatus = document.querySelector("#quote-status");
+  const money = new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR" });
+  let analysis;
+
+  function drawQuote() {
+    const quantity = quoteQuantity.valueAsNumber;
+    const service = catalogue[quoteService.value];
+    if (!service || !quoteQuantity.validity.valid) {
+      document.getElementById("quote-line").textContent = service ? "Saisis une quantité de 1 à 99." : "Choisis une prestation pour afficher le total.";
+      for (const id of ["quote-net", "quote-tax", "quote-total"]) document.getElementById(id).textContent = "—";
+      quoteApprove.disabled = true;
+      return;
+    }
+    const net = service.cents * quantity;
+    const tax = Math.round(net * 0.2);
+    document.getElementById("quote-line").textContent = `${quantity} × ${service.label} (${money.format(service.cents / 100)} HT)`;
+    document.getElementById("quote-net").textContent = money.format(net / 100);
+    document.getElementById("quote-tax").textContent = money.format(tax / 100);
+    document.getElementById("quote-total").textContent = money.format((net + tax) / 100);
+    quoteApprove.disabled = false;
+  }
+
+  function clearQuote(message) {
+    quotePanel.hidden = true;
+    quotePrint.hidden = true;
+    quoteService.disabled = false;
+    quoteQuantity.disabled = false;
+    quoteApprove.disabled = true;
+    quoteStatus.textContent = "";
+    quoteHelp.textContent = message;
+    delete document.body.dataset.quoteApproved;
+  }
+
+  function prepareQuote() {
+    const { state, fields } = analysis;
+    if (state === "duplicate") {
+      clearQuote("Cette référence est déjà enregistrée. Aucun deuxième devis à valider.");
+      return;
+    }
+    if (state !== "complete" || !fields.ref) {
+      clearQuote("Analyse une demande complète avec une référence pour préparer le devis.");
+      return;
+    }
+    clearQuote("Choisis la prestation et la quantité, puis valide le devis.");
+    quoteService.value = "";
+    quoteQuantity.value = "1";
+    document.getElementById("quote-reference").textContent = `Demande ${fields.ref}`;
+    document.getElementById("quote-where").textContent = fields.location;
+    quotePanel.hidden = false;
+    drawQuote();
+  }
+
+  function parse(message) {
+    const fields = { ref: "", from: "", subject: "", need: "", location: "", timing: "" };
+    for (const line of message.split(/\r?\n/)) {
+      const match = line.match(/^\s*([^:]{1,24}):\s*(.*?)\s*$/);
+      if (!match) continue;
+      const label = match[1].normalize("NFD").replace(/\p{Diacritic}/gu, "").toLowerCase().trim();
+      const key = aliases[label];
+      if (Object.hasOwn(fields, key) && !fields[key]) fields[key] = match[2];
+    }
+    return fields;
+  }
+
+  function analyse() {
+    const fields = parse(email.value);
+    const missing = Object.keys(required).filter(key => !fields[key] || (key === "from" && !/[^\s<>@]+@[^\s<>@]+\.[^\s<>@]+/.test(fields[key])));
+    const duplicate = registry.get(fields.ref.toUpperCase()) ?? null;
+    const state = duplicate ? "duplicate" : missing.length ? "incomplete" : "complete";
+    for (const [key, value] of Object.entries(fields)) document.getElementById(key).textContent = value || "Non renseigné";
+    status.dataset.state = state;
+    status.textContent = duplicate
+      ? "Doublon possible · " + duplicate
+      : missing.length
+        ? "À compléter · " + missing.map(key => required[key]).join(", ")
+        : "Informations reçues · prêt pour relecture";
+    const body = duplicate
+      ? "Merci pour votre message. Nous avons déjà reçu une demande avec la référence " + fields.ref + ". Pouvez-vous nous signaler tout changement à prendre en compte ?"
+      : missing.length
+        ? "Merci pour votre demande de devis. Pour l’étudier, pouvez-vous nous préciser " + new Intl.ListFormat("fr").format(missing.map(key => required[key])) + " ?"
+        : "Merci pour votre demande de devis. Nous avons les éléments pour l’étudier et reviendrons vers vous pour la suite.";
+    const hasSource = Boolean(email.value.trim());
+    draft.value = hasSource ? "Bonjour,\n\n" + body + "\n\nBonne journée," : "";
+    downloadButton.disabled = !hasSource;
+    downloadStatus.textContent = "";
+    sourceStatus.textContent = hasSource ? "Message analysé." : "Colle un message fictif.";
+    analysis = { fields, state, missing: missing.map(key => required[key]), duplicate };
+    prepareQuote();
+  }
+
+  document.querySelector("#analyse").addEventListener("click", analyse);
+  sample.addEventListener("change", () => {
+    email.value = samples[Number(sample.value)];
+    analyse();
+  });
+  email.addEventListener("input", () => {
+    sourceStatus.textContent = "Message modifié. Relance l’analyse.";
+    downloadButton.disabled = true;
+    downloadStatus.textContent = "";
+    clearQuote("Relance l’analyse avant de préparer le devis.");
+  });
+  quoteService.addEventListener("change", drawQuote);
+  quoteQuantity.addEventListener("input", drawQuote);
+  quoteForm.addEventListener("submit", event => {
+    event.preventDefault();
+    if (quotePanel.hidden || quoteApprove.disabled || !quoteForm.checkValidity()) return;
+    registry.set(analysis.fields.ref.toUpperCase(), "Un devis a été validé pour cette référence pendant cette visite.");
+    quoteService.disabled = true;
+    quoteQuantity.disabled = true;
+    quoteApprove.disabled = true;
+    quotePrint.hidden = false;
+    document.body.dataset.quoteApproved = "";
+    quoteStatus.textContent = "Devis validé. Choisis « Enregistrer au format PDF » dans la fenêtre d’impression.";
+  });
+  quotePrint.addEventListener("click", () => window.print());
+  downloadButton.addEventListener("click", () => {
+    const data = { simulation: true, ...analysis, draft: draft.value };
+    const blob = new Blob([JSON.stringify(data, null, 2) + "\n"], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = "fiche-demande-devis.json";
+    document.body.append(link);
+    link.click();
+    link.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+    downloadStatus.textContent = "Fiche téléchargée.";
+  });
+  email.value = samples[0];
+  analyse();
+</script>
+</body>
+</html>

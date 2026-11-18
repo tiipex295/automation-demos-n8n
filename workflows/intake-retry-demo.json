@@ -1,0 +1,48 @@
+{
+  "name": "Service intake · Offline recovery checks",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "825caafd-5805-4f64-a80b-cc78371be6a6",
+      "name": "Start offline checks",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        240,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "// Offline test harness. These adapters are in memory and make no external calls.\nconst sheet = new Map();\nconst notifications = new Map();\nconst requests = new Map();\nlet sheetWriteCount = 0;\nlet notificationSendCount = 0;\n\nfunction processRequest(payload, simulateFailure = \"\") {\n  const record = {\n    request_id: String(payload.request_id ?? \"\").trim(),\n    email: String(payload.email ?? \"\").trim(),\n    service: String(payload.service ?? \"\").trim(),\n  };\n  const { request_id: id, email, service } = record;\n  if (!/^[A-Za-z0-9_-]{1,80}$/.test(id) || !/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(email) || !service) {\n    return { status: 400, outcome: \"invalid_request\", request_id: id };\n  }\n\n  const fingerprint = JSON.stringify(record);\n  const state = requests.get(id) ?? { fingerprint, logged: false, notified: false };\n  if (state.fingerprint !== fingerprint) {\n    return { status: 409, outcome: \"request_id_conflict\", request_id: id };\n  }\n  if (state.notified) {\n    return { status: 200, outcome: \"duplicate_replay\", request_id: id };\n  }\n  requests.set(id, state);\n\n  if (!state.logged) {\n    if (simulateFailure === \"sheet\") {\n      return { status: 503, outcome: \"sheet_unavailable\", request_id: id };\n    }\n    sheet.set(id, record);\n    sheetWriteCount += 1;\n    state.logged = true;\n  }\n  if (simulateFailure === \"notification\") {\n    return { status: 503, outcome: \"notification_unavailable\", request_id: id };\n  }\n  notifications.set(id, { request_id: id, message: \"New \" + service + \" request from \" + email });\n  notificationSendCount += 1;\n  state.notified = true;\n  return { status: 201, outcome: \"accepted\", request_id: id };\n}\n\nfunction fixture(request_id) {\n  return { request_id, email: \"casey@example.invalid\", service: \"equipment setup\" };\n}\n\nconst scenarios = [\n  { name: \"New request\", payload: fixture(\"demo-001\"), status: 201, outcome: \"accepted\", rows: 1, alerts: 1 },\n  { name: \"Replay exact payload\", payload: fixture(\"demo-001\"), status: 200, outcome: \"duplicate_replay\", rows: 1, alerts: 1 },\n  { name: \"Sheet failure\", payload: fixture(\"demo-002\"), failure: \"sheet\", status: 503, outcome: \"sheet_unavailable\", rows: 1, alerts: 1 },\n  { name: \"Retry after sheet recovery\", payload: fixture(\"demo-002\"), status: 201, outcome: \"accepted\", rows: 2, alerts: 2 },\n  { name: \"Notification failure\", payload: fixture(\"demo-003\"), failure: \"notification\", status: 503, outcome: \"notification_unavailable\", rows: 3, alerts: 2 },\n  { name: \"Retry notification only\", payload: fixture(\"demo-003\"), status: 201, outcome: \"accepted\", rows: 3, alerts: 3 },\n  { name: \"Reject ID reuse with different payload\", payload: { ...fixture(\"demo-001\"), service: \"other\" }, status: 409, outcome: \"request_id_conflict\", rows: 3, alerts: 3 },\n];\n\nreturn scenarios.map(scenario => {\n  const result = processRequest(scenario.payload, scenario.failure);\n  const passed = result.status === scenario.status && result.outcome === scenario.outcome\n    && sheet.size === scenario.rows && notifications.size === scenario.alerts\n    && sheetWriteCount === scenario.rows && notificationSendCount === scenario.alerts;\n  if (!passed) throw new Error(\"Unexpected result for \" + scenario.name + \": \" + JSON.stringify(result));\n  return { json: { simulated: true, scenario: scenario.name, passed, ...result, sheet_rows: sheet.size, notifications: notifications.size, simulated_row_writes: sheetWriteCount, simulated_notification_sends: notificationSendCount } };\n});"
+      },
+      "id": "729ee5b1-5b39-4f9b-9ebc-bc917568e854",
+      "name": "Simulate request intake and verify outcomes",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        510,
+        300
+      ]
+    }
+  ],
+  "connections": {
+    "Start offline checks": {
+      "main": [
+        [
+          {
+            "node": "Simulate request intake and verify outcomes",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "pinData": {}
+}
