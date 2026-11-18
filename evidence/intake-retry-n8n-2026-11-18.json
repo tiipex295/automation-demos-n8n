@@ -1,0 +1,136 @@
+{
+  "schema_version": 1,
+  "verified_at_utc": "2026-11-18T19:04:57.787Z",
+  "environment": {
+    "n8n": "2.48.5",
+    "node": "24.22.3",
+    "execution_mode": "cli",
+    "code_execution": "n8n internal JavaScript task runner"
+  },
+  "workflow": {
+    "path": "workflows/intake-retry-demo.json",
+    "sha256": "30301df2bf70d8a116e17fa90b9280e9a763fb1a99247e1d9b77f3a97021eb56",
+    "modified_for_validation": false
+  },
+  "execution": {
+    "status": "success",
+    "finished": true,
+    "started_at_utc": "2026-11-18T19:04:57.090Z",
+    "stopped_at_utc": "2026-11-18T19:04:57.787Z",
+    "nodes": [
+      {
+        "name": "Start offline checks",
+        "status": "success"
+      },
+      {
+        "name": "Simulate request intake and verify outcomes",
+        "status": "success"
+      }
+    ]
+  },
+  "checks": {
+    "scenario_count": 7,
+    "all_passed": true,
+    "expected_statuses": [
+      201,
+      200,
+      503,
+      201,
+      503,
+      201,
+      409
+    ],
+    "final_row_count": 3,
+    "final_notification_count": 3,
+    "final_simulated_row_writes": 3,
+    "final_simulated_notification_sends": 3,
+    "successful_independent_n8n_executions": 2
+  },
+  "scope": "Sequential in-memory simulations within each execution. No real inbox, CRM, database table, notification service or automatic retry is connected.",
+  "results": [
+    {
+      "simulated": true,
+      "scenario": "New request",
+      "passed": true,
+      "status": 201,
+      "outcome": "accepted",
+      "request_id": "demo-001",
+      "sheet_rows": 1,
+      "notifications": 1,
+      "simulated_row_writes": 1,
+      "simulated_notification_sends": 1
+    },
+    {
+      "simulated": true,
+      "scenario": "Replay exact payload",
+      "passed": true,
+      "status": 200,
+      "outcome": "duplicate_replay",
+      "request_id": "demo-001",
+      "sheet_rows": 1,
+      "notifications": 1,
+      "simulated_row_writes": 1,
+      "simulated_notification_sends": 1
+    },
+    {
+      "simulated": true,
+      "scenario": "Sheet failure",
+      "passed": true,
+      "status": 503,
+      "outcome": "sheet_unavailable",
+      "request_id": "demo-002",
+      "sheet_rows": 1,
+      "notifications": 1,
+      "simulated_row_writes": 1,
+      "simulated_notification_sends": 1
+    },
+    {
+      "simulated": true,
+      "scenario": "Retry after sheet recovery",
+      "passed": true,
+      "status": 201,
+      "outcome": "accepted",
+      "request_id": "demo-002",
+      "sheet_rows": 2,
+      "notifications": 2,
+      "simulated_row_writes": 2,
+      "simulated_notification_sends": 2
+    },
+    {
+      "simulated": true,
+      "scenario": "Notification failure",
+      "passed": true,
+      "status": 503,
+      "outcome": "notification_unavailable",
+      "request_id": "demo-003",
+      "sheet_rows": 3,
+      "notifications": 2,
+      "simulated_row_writes": 3,
+      "simulated_notification_sends": 2
+    },
+    {
+      "simulated": true,
+      "scenario": "Retry notification only",
+      "passed": true,
+      "status": 201,
+      "outcome": "accepted",
+      "request_id": "demo-003",
+      "sheet_rows": 3,
+      "notifications": 3,
+      "simulated_row_writes": 3,
+      "simulated_notification_sends": 3
+    },
+    {
+      "simulated": true,
+      "scenario": "Reject ID reuse with different payload",
+      "passed": true,
+      "status": 409,
+      "outcome": "request_id_conflict",
+      "request_id": "demo-001",
+      "sheet_rows": 3,
+      "notifications": 3,
+      "simulated_row_writes": 3,
+      "simulated_notification_sends": 3
+    }
+  ]
+}

@@ -36,7 +36,9 @@ Le [script de test](../tests/intake-retry.test.cjs) charge le JSON du dépôt, e
 
 Le JavaScript du nœud Code a été exécuté dans une VM Node.js isolée. Les sept scénarios intégrés ont réussi. Une instrumentation indépendante des Maps a compté trois écritures et trois notifications. Une régression introduite volontairement, qui réécrivait la ligne lors de la reprise d’une notification, a fait échouer l’assertion.
 
-Douze vérifications d’audit supplémentaires ont réussi sur les champs obligatoires invalides, les espaces, les conflits de données et les échecs répétés de notification. Ces contrôles ont été exécutés séparément des sept scénarios inclus dans le workflow. Cette copie JSON a fait l’objet d’un contrôle de structure. Son import et son exécution dans une instance n8n restent à essayer.
+Douze vérifications d’audit supplémentaires ont réussi sur les champs obligatoires invalides, les espaces, les conflits de données et les échecs répétés de notification. Ces contrôles ont été exécutés séparément des sept scénarios inclus dans le workflow.
+
+Le fichier JSON inchangé a ensuite été importé dans **n8n 2.48.5 avec Node.js 24.22.3**. Deux exécutions indépendantes, utilisant le JavaScript task runner de n8n, ont terminé avec le statut `success`. Chacune a produit sept éléments conformes ; les compteurs finaux sont de trois écritures et trois notifications simulées. Aucune correction du workflow n’a été nécessaire. Consulter le [rapport de validation n8n](validation-n8n.md) et la [sortie JSON vérifiée](../evidence/intake-retry-n8n-2026-11-18.json).
 
 ## Portée
 
