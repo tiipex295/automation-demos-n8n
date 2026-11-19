@@ -34,6 +34,16 @@ Les pages HTML et les workflows n8n s’essaient séparément. Le workflow de de
 
 Le dédoublonnage n8n dure une exécution, celui de la page devis une visite. L’extraction du message utilise des champs libellés. Les prix, la TVA et les descriptions produit sont des exemples prédéfinis. Ces démonstrations fonctionnent sans connexion à une messagerie, un CRM ou PrestaShop. Un raccordement réel demande des accès de test, un stockage persistant et une recette métier.
 
+## Maquette animée avec voix ElevenLabs
+
+[![Aperçu de la maquette animée](assets/maquette-demandes-devis-apercu.png)](assets/maquette-demandes-devis-elevenlabs-fr.mp4)
+
+Une vidéo de **50 secondes** présente le parcours cible : demande entrante, contrôle des champs et doublons, brouillon, validation humaine avant PDF et reprise après erreur. **Schéma animé, données fictives et voix synthétique ElevenLabs** (narrateur de bibliothèque). Les raccordements aux outils métier restent à cadrer ; la maquette web demeure autonome.
+
+- [Voir la vidéo MP4](assets/maquette-demandes-devis-elevenlabs-fr.mp4)
+- [Consulter la maquette PDF](assets/maquette-demandes-devis-fr.pdf)
+- [Lire les sous-titres](assets/maquette-demandes-devis-fr.srt) · [Script de la narration](assets/maquette-demandes-devis-fr.txt)
+
 ## English overview
 
 Personal automation demos using fictional data. The n8n workflow checks six quote requests and returns two drafts for review, three incomplete requests and one duplicate skipped within the same run. The standalone HTML demos cover quote review and calculation, manual approval, catalogue checks and CSV export. A second workflow demonstrates seven simulated sequential recovery scenarios within one execution, with explicit retries and counters for simulated writes. It was imported and executed successfully twice in n8n 2.48.5 with Node.js 24.22.3 on 18 November 2026. All seven scenarios passed, with three simulated row writes and three simulated notifications per execution. See the [n8n validation report](docs/validation-n8n.md) and its recorded JSON output.

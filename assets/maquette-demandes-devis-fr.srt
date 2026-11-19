@@ -1,0 +1,83 @@
+1
+00:00:01,200 --> 00:00:02,871
+Voici une maquette de traitement
+
+2
+00:00:02,896 --> 00:00:04,566
+des demandes de devis.
+
+3
+00:00:04,591 --> 00:00:07,059
+Une demande arrive par e-mail ou formulaire.
+
+4
+00:00:07,461 --> 00:00:10,305
+Le workflow contrôle les informations utiles,
+
+5
+00:00:10,330 --> 00:00:11,784
+repère les champs manquants
+
+6
+00:00:11,809 --> 00:00:14,537
+et évite de traiter deux fois la même demande.
+
+7
+00:00:14,765 --> 00:00:16,305
+Quand le dossier est complet,
+
+8
+00:00:16,330 --> 00:00:18,218
+il prépare un brouillon de devis,
+
+9
+00:00:18,243 --> 00:00:20,436
+selon une grille tarifaire approuvée.
+
+10
+00:00:20,461 --> 00:00:22,103
+L’équipe relit et valide
+
+11
+00:00:22,417 --> 00:00:25,610
+: aucun PDF n’est généré avant cette étape.
+
+12
+00:00:25,635 --> 00:00:28,103
+Si une erreur survient, elle reste visible
+
+13
+00:00:28,157 --> 00:00:29,842
+et la demande peut être reprise
+
+14
+00:00:29,896 --> 00:00:31,523
+sans créer de doublon.
+
+15
+00:00:31,548 --> 00:00:34,305
+Pour un premier lot, on cadre une seule source
+
+16
+00:00:34,330 --> 00:00:36,392
+et une seule destination de test,
+
+17
+00:00:36,417 --> 00:00:39,305
+puis on livre le workflow, ses cas de test
+
+18
+00:00:39,330 --> 00:00:41,218
+et une notice de reprise.
+
+19
+00:00:41,243 --> 00:00:44,088
+Cette présentation utilise des données fictives.
+
+20
+00:00:44,113 --> 00:00:45,755
+La maquette web est autonome
+
+21
+00:00:45,983 --> 00:00:48,711
+; les connexions aux outils réels restent à cadrer.
